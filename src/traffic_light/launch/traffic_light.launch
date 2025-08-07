@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="traffic_light" type="traffic_light_node.py" name="traffic_light_mission" output="screen">
+    <!-- 신호등 상태를 수신하는 토픽. 상황에 맞게 변경 가능 -->
+    <param name="traffic_light_topic" value="/traffic_light"/>
+  </node>
+</launch>
