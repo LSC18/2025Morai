@@ -1,0 +1,10 @@
+<launch>
+  <!-- /ctrl/steering → /commands/servo/position,
+       /ctrl/speed    → /commands/vel -->
+  <node pkg="control" type="controller_node.py" name="controller" output="screen">
+    <param name="~steering_in"  value="/ctrl/steering"/>
+    <param name="~speed_in"     value="/ctrl/speed"/>
+    <param name="~steering_out" value="/commands/servo/position"/>
+    <param name="~speed_out"    value="/commands/vel"/>
+  </node>
+</launch>

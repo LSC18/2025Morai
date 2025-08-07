@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>control</name>
+  <version>0.0.1</version>
+  <description>Forward /ctrl/* 토픽을 실제 actuator 토픽으로 리맵하는 컨트롤러</description>
+  <maintainer email="you@example.com">Your Name</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+</package>
