@@ -1,0 +1,9 @@
+<launch>
+  <!-- 노드 이름 커스터마이즈 -->
+  <arg name="node_name" default="sequence_manager"/>
+
+  <!-- 필요시 remap 예시: <remap from="/ctrl/steering" to="/ctrl/steering"/> -->
+  <node pkg="sequence_manager" type="sequence_manager_node.py" name="$(arg node_name)" output="screen">
+    <!-- 여기에 추후 파라미터/리맵을 추가하면 됨 -->
+  </node>
+</launch>

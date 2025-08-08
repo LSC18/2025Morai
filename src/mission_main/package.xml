@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mission_main</name>
+  <version>0.1.0</version>
+  <description>Launch entrypoint for 2025Morai: brings up all mission/control nodes.</description>
+  <maintainer email="you@example.com">Your Name</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <!-- 런치에서 include만 하므로 의존은 선택사항이지만, 안전하게 명시해둠 -->
+  <exec_depend>controller</exec_depend>
+  <exec_depend>lane_follower</exec_depend>
+  <exec_depend>sequence_manager</exec_depend>
+  <exec_depend>traffic_light</exec_depend>
+  <export/>
+</package>
