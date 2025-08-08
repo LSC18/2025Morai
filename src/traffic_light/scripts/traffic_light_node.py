@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+# ─── scripts/ -> 상위 폴더(lane_follower 패키지 루트) 경로를 PYTHONPATH에 추가 ───
+current_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir  = os.path.abspath(os.path.join(current_dir, '..'))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 import rospy
 from std_msgs.msg import Int32, Float64
 from traffic_light.perception import TrafficLightPerception

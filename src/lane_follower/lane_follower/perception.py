@@ -12,7 +12,6 @@ class Perception:
         self.white_range = None
         self.combined_range = None
         self.warped_img = None
-        self.speed = 1800  # 기본 속도
 
     def img_init(self, img):
         # 원본 BGR -> HSV & 크기 저장

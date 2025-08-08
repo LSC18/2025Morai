@@ -31,7 +31,6 @@ class LaneFollowerNode:
         # topics (can be overriden via rosparam)
         image_topic    = rospy.get_param('~image_topic',    '/image_jpeg/compressed')
         steer_topic    = rospy.get_param('~steering_topic', '/lane/steer')
-        speed_topic    = rospy.get_param('~speed_topic',    '/lane/speed')
 
         # sliding‐window parameters
         nwindows  = rospy.get_param('~nwindows',  12)
@@ -46,12 +45,18 @@ class LaneFollowerNode:
         self.perc   = Perception()
         self.det    = Detection(nwindows, margin, minpix, threshold)
 
+        # --- target_bias_defualt ---
+        self.target_bias = 0.0
+
         # --- Publishers & Subscriber ---
         self.steer_pub = rospy.Publisher(steer_topic, Float64, queue_size=1)
-        self.speed_pub = rospy.Publisher(speed_topic, Float64, queue_size=1)
         rospy.Subscriber(image_topic, CompressedImage, self._image_cb, queue_size=1)
+        rospy.Subscriber("/lane/target_bias", Float64, self._bias_cb, queue_size=1)
 
         rospy.loginfo("lane_follower node started; listening to %s", image_topic)
+
+    def _bias_cb(self, msg:Float64):
+        self.target_bias = msg.data # -1.0 ~ 1.0
 
     def _image_cb(self, msg: CompressedImage):
         # 1) Convert ROS msg to OpenCV image
@@ -74,14 +79,13 @@ class LaneFollowerNode:
             x        = self.perc.x,
             l_lane   = l_lane,
             r_lane   = r_lane,
-            midrange = self.midrange
+            midrange = self.midrange,
+            bias     = self.target_bias
         )
-        speed = self.perc.speed  # default or modified in perception
 
         # 5) Publish control commands
-        rospy.loginfo(f"speed : {Float64(speed)}\nsteering : {Float64(ctrl)}\n")
+        rospy.loginfo(f"steering : {Float64(ctrl)}\n")
         self.steer_pub.publish(Float64(ctrl))
-        self.speed_pub.publish(Float64(speed))
 
     def spin(self):
         rospy.spin()

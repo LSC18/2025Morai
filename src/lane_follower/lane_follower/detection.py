@@ -76,7 +76,7 @@ class Detection:
         self.r_lane = (rx, ry, r_err)
         return self.l_lane, self.r_lane
 
-    def compute_control(self, x, l_lane, r_lane, midrange=300):
+    def compute_control(self, x, l_lane, r_lane, midrange=300, bias=0.0):
         # 기본 go_forward 로직: 중앙선 계산
         posl = int(np.mean(l_lane[0][1:4]))
         posr = int(np.mean(r_lane[0][1:3]))
@@ -84,6 +84,8 @@ class Detection:
         if max(l_lane[2]) >= fail_thr:
             posl = posr - 286
         pos = (posl + posr)//2
+        # bias 적용
+        pos += int(bias * midrange)
         # 0~1로 정규화
         midstart = x//2 - midrange
         midend   = x//2 + midrange
