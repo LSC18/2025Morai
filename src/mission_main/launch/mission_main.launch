@@ -1,6 +1,6 @@
 <launch>
   <!-- Controller -->
-  <include file="$(find controller)/launch/controller.launch" />
+  <include file="$(find control)/launch/controller.launch" />
 
   <!-- Lane Follower -->
   <include file="$(find lane_follower)/launch/lane_follower.launch" />

@@ -11,7 +11,6 @@ catkin_package()
 # 파이썬 실행 스크립트 설치
 catkin_install_python(PROGRAMS
   scripts/sequence_manager_node.py
-  scripts/sequence_enum.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
