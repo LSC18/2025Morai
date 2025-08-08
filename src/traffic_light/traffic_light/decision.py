@@ -33,5 +33,5 @@ class TrafficLightDecision:
         if key == 'STRAIGHT':
             return False, False
 
-        # 알 수 없는 상태는 안전하게 정지
+        # 알 수 없는 상태는 안전하게 정지 !
         return True, False
