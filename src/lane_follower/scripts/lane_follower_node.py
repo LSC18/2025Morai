@@ -30,8 +30,8 @@ class LaneFollowerNode:
         rospy.init_node('lane_follower', anonymous=False)
         # topics (can be overriden via rosparam)
         image_topic    = rospy.get_param('~image_topic',    '/image_jpeg/compressed')
-        steer_topic    = rospy.get_param('~steering_topic', '/ctrl/steering')
-        speed_topic    = rospy.get_param('~speed_topic',    '/ctrl/speed')
+        steer_topic    = rospy.get_param('~steering_topic', '/lane/steer')
+        speed_topic    = rospy.get_param('~speed_topic',    '/lane/speed')
 
         # sliding‐window parameters
         nwindows  = rospy.get_param('~nwindows',  12)

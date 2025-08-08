@@ -6,4 +6,5 @@ class SequenceState(IntEnum):
     LANE_FOLLOWING = 1
     STATIC_OBSTACLE = 2
     DYNAMIC_OBSTACLE = 3
+    ROTARY = 4
     # 필요 시 이후 상태 계속 추가 가능
