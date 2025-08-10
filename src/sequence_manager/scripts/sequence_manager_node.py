@@ -20,7 +20,7 @@ class SequenceManager:
 
         #--------------------초기상태, 멤버 초기화--------------------
 
-        self.sequence = SequenceState.SLAM  # 초기값: SLAM 상태
+        self.sequence = SequenceState.LANE_FOLLOWING  # 초기값: LANE_FOLLOWING 상태
         self.speed_default = 1500 # 기본속도
         self.speed_turn = 1000 # 회전속도
 
