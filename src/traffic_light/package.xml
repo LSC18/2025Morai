@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<package format="2">
+  <!--
+    The ``traffic_light`` package provides a simple Python implementation
+    for interpreting raw traffic light messages and computing steering
+    commands.  It consists of helper classes for perception and decision
+    making along with a ROS node script and a launch file.
+  -->
+
+  <name>traffic_light</name>
+  <version>0.0.1</version>
+  <description>Traffic light perception and decision node</description>
+
+  <!-- Replace the maintainer name and e‑mail address with your own. -->
+  <maintainer email="you@example.com">Your Name</maintainer>
+  <license>MIT</license>
+
+  <!--
+    Catkin build tool dependency.  All packages must declare a
+    ``catkin`` buildtool dependency when using the catkin build system.
+  -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!--
+    Runtime and build dependencies.  ``rospy`` provides Python bindings
+    for ROS, and ``std_msgs`` supplies the Int32 and Float64 message
+    types used by this package.
+  -->
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+
+  <!--
+    If additional dependencies are required (e.g., message types or
+    libraries), list them here as ``depend`` tags.  This keeps build
+    and runtime environments consistent.
+  -->
+
+</package>
