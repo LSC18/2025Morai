@@ -1,37 +1,20 @@
-# traffic_light/decision.py
-"""Traffic light decision logic.
+#!/usr/bin/env python3
+from dataclasses import dataclass
 
-State mapping:
+@dataclass(frozen=True)
+class TLAction:
+    semantic: str       # 'RED'|'YELLOW'|'STRAIGHT'|'LEFT'
+    stop: bool          # 정지해야 하는가 (RED만 True)
+    caution: bool       # 주의(감속 등) 신호 (YELLOW만 True)
+    go_left: bool       # 좌회전 진행 플래그 (LEFT)
+    go_straight: bool   # 직진 진행 플래그 (STRAIGHT)
 
-State       is_stop   is_left
----------------------------------
-RED         True      False
-YELLOW      True      False
-LEFT        False     True
-STRAIGHT    False     False
-(other)     True      False
-"""
-
-from typing import Tuple
-
-class TrafficLightDecision:
-    """Convert semantic traffic light state to stop/left flags."""
-
-    def get_command(self, state: str) -> Tuple[bool, bool]:
-        # 기본적으로 문자열을 대문자로 맞춰줍니다.
-        if not isinstance(state, str):
-            return True, False
-
-        key = state.upper()
-
-        if key == 'RED':
-            return True, False
-        if key == 'YELLOW':
-            return True, False
-        if key == 'LEFT':
-            return False, True
-        if key == 'STRAIGHT':
-            return False, False
-
-        # 알 수 없는 상태는 안전하게 정지 !
-        return True, False
+def decide(semantic: str) -> TLAction:
+    if semantic == "LEFT":
+        return TLAction(semantic, False, False, True, False)
+    if semantic == "STRAIGHT":
+        return TLAction(semantic, False, False, False, True)
+    if semantic == "YELLOW":
+        return TLAction(semantic, False, True,  False, False)
+    # RED 또는 알 수 없는 값은 정지
+    return TLAction("RED", True, False, False, False)

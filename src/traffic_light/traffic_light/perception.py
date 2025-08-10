@@ -1,12 +1,3 @@
-"""Convert raw Int32 traffic light messages into simple state strings.
-
-The simulator publishes an ``Int32`` value on a configurable topic (default
-``/traffic_light``).  This helper turns that raw value into one of
-``'RED'``, ``'YELLOW'``, ``'STRAIGHT'`` or ``'LEFT'``.  Two encodings are
-supported: a bitfield (separate three‑bit counters for left/straight) and
-a simple integer mapping.  See the project README for full details.
-"""
-
 from typing import Any, Optional
 
 class TrafficLightPerception:
@@ -36,7 +27,6 @@ class TrafficLightPerception:
         return 'RED'
 
     def _decode_raw(self, raw: int) -> str:
-        """Map small integers to states: 0=RED, 1=YELLOW, 2=STRAIGHT, 3=LEFT."""
         if raw == 1:
             return 'RED'
         if raw == 4:
@@ -49,7 +39,8 @@ class TrafficLightPerception:
 
     def update(self, msg: Any) -> str:
         """Decode an incoming message to a state; bitfield for values >3 else simple mapping."""
-        raw_value = getattr(msg, 'trafficLightStatus', None)
+        # raw_value = getattr(msg, '.trafficLightStatus', None)
+        raw_value = int(msg)
         self.last_raw = raw_value
 
         if raw_value is None:
@@ -57,7 +48,7 @@ class TrafficLightPerception:
 
         try:
             if raw_value > 3:
-                return self._decode_bitfield(int(raw_value))
+                return self._decode_raw(int(raw_value))
             return self._decode_raw(int(raw_value))
         except Exception:
             return 'RED'

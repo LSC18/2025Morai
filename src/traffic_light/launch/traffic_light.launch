@@ -1,5 +1,5 @@
 <launch>
-  <arg name="traffic_topic" default="/GetTrafficStatus"/>
+  <arg name="traffic_topic" default="/GetTrafficLightStatus"/>
   <node pkg="traffic_light" type="traffic_light_node.py" name="traffic_light_mission" output="screen">
     <param name="traffic_topic" value="$(arg traffic_topic)"/>
   </node>
