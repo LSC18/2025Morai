@@ -167,21 +167,24 @@ class SequenceManager:
     def handle_traffic_light(self):
         rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등 미션 실행 중...")
         if self.traffic_is_stop:
+            rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등미션 : 정지신호")
             self.speed_pub.publish(Float64(0.))
             self.steer_pub.publish(Float64(0.))
             # break도 pub해줘야됨
             self.bias_pub.publish(Float64(0.))
         else:
             if self.traffic_is_left:
+                rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등 미션 : 좌회전")
                 self.speed_pub.publish(Float64(self.speed_turn))
                 self.steer_pub.publish(self.lane_steer)
                 self.bias_pub.publish(Float64(-1.0))
             else:
+                rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등 미션 : 직진")
                 self.speed_pub.publish(Float64(self.speed_default))
                 self.steer_pub.publish(self.lane_steer)
                 self.bias_pub.publish(Float64(0.))
 
-    def handle_trun_left(self):
+    def handle_turn_left(self):
         rospy.loginfo_throttle(2.0, "[SequenceManager] 차선 추종 중... : 좌편향")
         self.speed_pub.publish(Float64(self.speed_turn))
         self.steer_pub.publish(self.lane_steer)
