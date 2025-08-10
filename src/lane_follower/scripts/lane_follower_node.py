@@ -38,7 +38,7 @@ class LaneFollowerNode:
         minpix    = rospy.get_param('~minpix',     5)
         threshold = rospy.get_param('~threshold',100)
         # control “midrange” half‐width
-        self.midrange = rospy.get_param('~midrange', 300)
+        self.midrange = rospy.get_param('~midrange', 330)
 
         # --- Helpers ---
         self.bridge = CvBridge()
@@ -82,10 +82,12 @@ class LaneFollowerNode:
             midrange = self.midrange,
             bias     = self.target_bias
         )
-
+        
+        steer = self.det.shape_steer(ctrl, p=1.6, scale=3.5)
+        
         # 5) Publish control commands
-        rospy.loginfo(f"steering : {Float64(ctrl)}\n")
-        self.steer_pub.publish(Float64(ctrl))
+        rospy.loginfo(f"steering : {Float64(steer)}\n")
+        self.steer_pub.publish(Float64(steer))
 
     def spin(self):
         rospy.spin()

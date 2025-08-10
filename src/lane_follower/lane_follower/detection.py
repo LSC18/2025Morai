@@ -91,3 +91,9 @@ class Detection:
         midend   = x//2 + midrange
         ctrl = ((pos-midstart)*(1-0)/(midend-midstart)) + 0
         return ctrl
+
+    def shape_steer(self, steer_in, p=1.6, scale=5.0):
+        e = steer_in - 0.5
+        y = (abs(e) ** p) * np.sign(e)* scale
+        steer_out = 0.5 + y
+        return max(0.0, min(1.0, steer_out))
