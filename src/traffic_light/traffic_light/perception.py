@@ -37,19 +37,19 @@ class TrafficLightPerception:
 
     def _decode_raw(self, raw: int) -> str:
         """Map small integers to states: 0=RED, 1=YELLOW, 2=STRAIGHT, 3=LEFT."""
-        if raw == 0:
-            return 'RED'
         if raw == 1:
+            return 'RED'
+        if raw == 4:
             return 'YELLOW'
-        if raw == 2:
+        if raw == 16:
             return 'STRAIGHT'
-        if raw == 3:
+        if raw == 33:
             return 'LEFT'
         return 'RED'
 
     def update(self, msg: Any) -> str:
         """Decode an incoming message to a state; bitfield for values >3 else simple mapping."""
-        raw_value = getattr(msg, 'data', None)
+        raw_value = getattr(msg, 'trafficLightStatus', None)
         self.last_raw = raw_value
 
         if raw_value is None:
