@@ -9,5 +9,5 @@
   <include file="$(find sequence_manager)/launch/sequence_manager.launch" />
 
   <!-- Traffic Light -->
-  <!-- <include file="$(find traffic_light)/launch/traffic_light.launch" /> -->
+  <include file="$(find traffic_light)/launch/traffic_light.launch" />
 </launch>

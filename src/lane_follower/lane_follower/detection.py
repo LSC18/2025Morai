@@ -176,7 +176,7 @@ class Detection:
 
         elif mode == "right_only":
             xR = self._repr_x(r_lane[0])
-            pos = xR - lane_width_px // 2 - delta_px * 2
+            pos = xR - lane_width_px // 2 - delta_px
 
         else:
             # ---- 기존 로직 그대로 ----

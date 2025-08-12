@@ -1,0 +1,14 @@
+# Catkin & ROS build artifacts
+build/
+devel/
+logs/
+.catkin_tools/
+
+# ROS specific
+*.pyc
+*.pyo
+__pycache__/
+
+# 기타 IDE 설정 파일
+.vscode/
+.idea/

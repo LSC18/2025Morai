@@ -218,7 +218,7 @@ class SequenceManager:
     def handle_turn_right(self):
         rospy.loginfo_throttle(2.0, "[SequenceManager] 차선 추종 중... : 우편향")
         self.mode_pub.publish(Float64(1.0))
-        self.speed_pub.publish(Float64(self.speed_turn))
+        self.speed_pub.publish(Float64(self.speed_turn+100))
         self.steer_pub.publish(self.lane_steer)
 
 
