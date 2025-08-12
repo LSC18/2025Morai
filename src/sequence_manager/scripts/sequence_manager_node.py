@@ -10,7 +10,7 @@ if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
     
 import rospy
-from std_msgs.msg import Float64, Int32, Bool
+from std_msgs.msg import Float64, Int32, Bool, String
 from sequence_manager.sequence_enum import SequenceState
 
 class SequenceManager:
@@ -20,27 +20,27 @@ class SequenceManager:
 
         #--------------------초기상태, 멤버 초기화--------------------
 
-        self.sequence = SequenceState.LANE_FOLLOWING  # 초기값: LANE_FOLLOWING 상태
-        self.speed_default = 1500 # 기본속도
+        self.sequence = SequenceState.TRAFFIC_LIGHT  # 초기값: LANE_FOLLOWING 상태
+        self.speed_default = 1000 # 기본속도
         self.speed_turn = 1000 # 회전속도
+        self.speed_slow = 800 # 느린속도
 
         self.idle_speed = 0.
         self.idle_steer = 0.
-        self.lane_speed = None
         self.lane_steer = None
+        self.lane_stopline = None
         self.static_speed = None
         self.static_steer = None
         self.dynamic_speed = None
         self.dynamic_steer = None
         self.traffic_is_stop = None
-        self.traffic_is_left = None
 
         #--------------------Publisher--------------------
 
         self.seq_pub = rospy.Publisher("/sequence/state", Int32, queue_size=1)
         self.speed_pub = rospy.Publisher("/ctrl/speed", Float64, queue_size=1)
         self.steer_pub = rospy.Publisher("/ctrl/steering", Float64, queue_size=1)
-        self.bias_pub = rospy.Publisher("/lane/target_bias", Float64, queue_size=1)
+        self.mode_pub = rospy.Publisher("/lane/mode", Float64, queue_size=1)
 
         #--------------------Subscriber--------------------
         
@@ -50,12 +50,12 @@ class SequenceManager:
         self.traffic_done_sub = rospy.Subscriber("/sequence/traffic_done", Bool, self.traffic_done_CB)
 
         self.lane_steer_sub = rospy.Subscriber("/lane/steer", Float64, self.lane_steer_CB)
+        self.lane_stopline_sub = rospy.Subscriber("/lane/stopline", Bool, self.lane_stopline_CB)
         self.static_speed_sub = rospy.Subscriber("/static/speed", Float64, self.static_speed_CB)
         self.static_steer_sub = rospy.Subscriber("/static/steer", Float64, self.static_steer_CB)
         self.dynamic_speed_sub = rospy.Subscriber("/dynamic/speed", Float64, self.dynamic_speed_CB)
         self.dynamic_steer_sub = rospy.Subscriber("/dynamic/steer", Float64, self.dynamic_steer_CB)
-        self.traffic_speed_sub = rospy.Subscriber("/traffic/is_stop", Bool, self.traffic_is_stop_CB)
-        self.traffic_steer_sub = rospy.Subscriber("/traffic/is_left", Bool, self.traffic_is_left_CB)
+        self.traffic_speed_sub = rospy.Subscriber("/traffic/semantic", String, self.traffic_semantic_CB)
 
         self.rate = rospy.Rate(20)
         self.run()
@@ -87,12 +87,12 @@ class SequenceManager:
             self.sequence = SequenceState.TRAFFIC_LIGHT
 
     #--------------------각 미션별 조향각, 속도 콜백함수--------------------
-
-    def lane_speed_CB(self, msg):
-        self.lane_speed = msg.data
     
     def lane_steer_CB(self, msg):
         self.lane_steer = msg.data
+        
+    def lane_stopline_CB(self, msg):
+        self.lane_stopline = msg.data
 
     def static_speed_CB(self, msg):
         self.static_speed = msg.data
@@ -106,13 +106,13 @@ class SequenceManager:
     def dynamic_steer_CB(self, msg):
         self.dynamic_steer = msg.data
 
-    def traffic_is_stop_CB(self, msg):
-        self.traffic_is_stop = msg.data
-    
-    def traffic_is_left_CB(self, msg):
-        self.traffic_is_left = msg.data
+    def traffic_semantic_CB(self, msg):
+        if msg.data == "LEFT" or msg.data == "STRAIGHT":
+            self.traffic_is_stop = False
+        else:
+            self.traffic_is_stop = True
             
-    #--------------------시퀀스 Enum 기반으로 분기 처리하는 함수--------------------
+    #--------------------시퀀스 Enum 기반으로 분기 처리하는 함수--------------------s
         
     def run(self):
         while not rospy.is_shutdown():
@@ -152,7 +152,7 @@ class SequenceManager:
         rospy.loginfo_throttle(2.0, "[SequenceManager] 차선 추종 중... : 기본값")
         self.speed_pub.publish(Float64(self.speed_default))
         self.steer_pub.publish(self.lane_steer)
-        self.bias_pub.publish(Float64(0.0))
+        self.mode_pub.publish(Float64(0.0))
 
     def handle_static_obstacle(self):
         rospy.loginfo_throttle(2.0, "[SequenceManager] 정적 장애물 회피 중...")
@@ -168,21 +168,18 @@ class SequenceManager:
         rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등 미션 실행 중...")
         if self.traffic_is_stop:
             rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등미션 : 정지신호")
-            self.speed_pub.publish(Float64(0.))
-            self.steer_pub.publish(Float64(0.))
-            # break도 pub해줘야됨
-            self.bias_pub.publish(Float64(0.))
-        else:
-            if self.traffic_is_left:
-                rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등 미션 : 좌회전")
-                self.speed_pub.publish(Float64(self.speed_turn))
-                self.steer_pub.publish(self.lane_steer)
-                self.bias_pub.publish(Float64(-1.0))
+            self.mode_pub.publish(Float64(0.))
+            if self.lane_stopline:
+                self.speed_pub.publish(Float64(-0.))
+                self.steer_pub.publish(Float64(0.5))
             else:
-                rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등 미션 : 직진")
-                self.speed_pub.publish(Float64(self.speed_default))
+                self.speed_pub.publish(Float64(self.speed_slow))
                 self.steer_pub.publish(self.lane_steer)
-                self.bias_pub.publish(Float64(0.))
+        else:
+            rospy.loginfo_throttle(2.0, "[SequenceManager] 신호등 미션 : 좌회전")
+            self.mode_pub.publish(Float64(-1.0))
+            self.speed_pub.publish(Float64(self.speed_turn))
+            self.steer_pub.publish(self.lane_steer)
 
     def handle_turn_left(self):
         rospy.loginfo_throttle(2.0, "[SequenceManager] 차선 추종 중... : 좌편향")

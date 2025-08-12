@@ -13,7 +13,7 @@ if parent_dir not in sys.path:
 import rospy
 import cv2
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Bool
 from cv_bridge import CvBridge, CvBridgeError
 
 from lane_follower.perception import Perception
@@ -34,29 +34,39 @@ class LaneFollowerNode:
 
         # sliding‐window parameters
         nwindows  = rospy.get_param('~nwindows',  12)
-        margin    = rospy.get_param('~margin',    60)
+        margin    = rospy.get_param('~margin',    105)
         minpix    = rospy.get_param('~minpix',     5)
         threshold = rospy.get_param('~threshold',100)
         # control “midrange” half‐width
-        self.midrange = rospy.get_param('~midrange', 330)
-
+        self.midrange = rospy.get_param('~midrange', 260) # 310이 베스트인듯? 260은 좌회전, 우회전때
+        
+        # --- direction mode ---
+        self.mode = "normal"
+        
+        # --- flag ---
+        self.stopline_flag = False
+        
         # --- Helpers ---
         self.bridge = CvBridge()
         self.perc   = Perception()
         self.det    = Detection(nwindows, margin, minpix, threshold)
-
-        # --- target_bias_defualt ---
-        self.target_bias = 0.0
-
+        
         # --- Publishers & Subscriber ---
         self.steer_pub = rospy.Publisher(steer_topic, Float64, queue_size=1)
+        self.stopline_pub = rospy.Publisher("/lane/stopline", Bool, queue_size=1)
+        
         rospy.Subscriber(image_topic, CompressedImage, self._image_cb, queue_size=1)
-        rospy.Subscriber("/lane/target_bias", Float64, self._bias_cb, queue_size=1)
+        rospy.Subscriber("/lane/mode", Float64, self._mode_cb, queue_size=1)
 
         rospy.loginfo("lane_follower node started; listening to %s", image_topic)
 
-    def _bias_cb(self, msg:Float64):
-        self.target_bias = msg.data # -1.0 ~ 1.0
+    def _mode_cb(self, msg:Float64):
+        if msg.data < 0:
+            self.mode = "left_only"
+        elif msg.data > 0:
+            self.mode = "right_only"
+        else:
+            self.mode = "normal"
 
     def _image_cb(self, msg: CompressedImage):
         # 1) Convert ROS msg to OpenCV image
@@ -72,15 +82,27 @@ class LaneFollowerNode:
         self.perc.img_warp()          # perspective warp → top-down view
 
         # 3) Detection: sliding window → left/right lane lines
-        l_lane, r_lane = self.det.sliding_window(self.perc.img)
+        l_lane, r_lane, img = self.det.sliding_window(self.perc.img, mode=self.mode)
+        
+        # ?) 정지선 검출 및 발행
+        self.stopline_flag = self.det.detect_stopline(
+            self.perc.img,
+            band_from_bottom=0,
+            band_height=80,
+            row_ratio_thr=0.4,
+            hold_frames=3
+        )
+        self.stopline_pub.publish(Bool(self.stopline_flag))
 
         # 4) Control computation
         ctrl = self.det.compute_control(
-            x        = self.perc.x,
-            l_lane   = l_lane,
-            r_lane   = r_lane,
-            midrange = self.midrange,
-            bias     = self.target_bias
+            x             = self.perc.x,
+            l_lane        = l_lane,
+            r_lane        = r_lane,
+            midrange      = self.midrange,
+            mode          = self.mode,
+            lane_width_px = 286,
+            delta_px      = 10
         )
         
         steer = self.det.shape_steer(ctrl, p=1.6, scale=3.5)
@@ -88,6 +110,10 @@ class LaneFollowerNode:
         # 5) Publish control commands
         rospy.loginfo(f"steering : {Float64(steer)}\n")
         self.steer_pub.publish(Float64(steer))
+        
+        # 6) 디버그 시각화 : BEV 이진 이미지
+        cv2.imshow("BEV Binary", img)
+        cv2.waitKey(1)
 
     def spin(self):
         rospy.spin()
