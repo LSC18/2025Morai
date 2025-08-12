@@ -9,4 +9,5 @@ class SequenceState(IntEnum):
     TRAFFIC_LIGHT = 4
     TURN_LEFT = 5
     TURN_RIGHT = 6
+    ROTARY = 7
     # 필요 시 이후 상태 계속 추가 가능

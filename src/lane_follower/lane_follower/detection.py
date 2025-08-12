@@ -26,7 +26,7 @@ class Detection:
         elif mode == "right_only":
             # 우회전: 왼쪽/좌상향 영역 컷
             pts = np.array([[
-                (int(0.40*w), h), (w, h), (w, int(0.0*h)), (int(0.70*w), int(0.5*h))
+                (int(0.40*w), h), (w, h), (w, int(0.3*h)), (int(0.70*w), int(0.65*h))
             ]], dtype=np.int32)
 
         cv2 = __import__("cv2")  # (외부 import 안 건드리기용)
@@ -176,7 +176,7 @@ class Detection:
 
         elif mode == "right_only":
             xR = self._repr_x(r_lane[0])
-            pos = xR - lane_width_px // 2 + delta_px
+            pos = xR - lane_width_px // 2 - delta_px * 2
 
         else:
             # ---- 기존 로직 그대로 ----

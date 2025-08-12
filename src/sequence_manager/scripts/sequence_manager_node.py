@@ -12,6 +12,7 @@ if parent_dir not in sys.path:
 import rospy
 from std_msgs.msg import Float64, Int32, Bool, String
 from sequence_manager.sequence_enum import SequenceState
+import threading
 
 class SequenceManager:
     def __init__(self):
@@ -20,8 +21,8 @@ class SequenceManager:
 
         #--------------------초기상태, 멤버 초기화--------------------
 
-        self.sequence = SequenceState.TRAFFIC_LIGHT  # 초기값: LANE_FOLLOWING 상태
-        self.speed_default = 1000 # 기본속도
+        self.sequence = SequenceState.TURN_RIGHT  # 초기값: LANE_FOLLOWING 상태
+        self.speed_default = 1500 # 기본속도
         self.speed_turn = 1000 # 회전속도
         self.speed_slow = 800 # 느린속도
 
@@ -34,6 +35,8 @@ class SequenceManager:
         self.dynamic_speed = None
         self.dynamic_steer = None
         self.traffic_is_stop = None
+        
+        self.timer_threads = [] # 타이머 작업 저장용 (중복 실행 방지)
 
         #--------------------Publisher--------------------
 
@@ -47,6 +50,7 @@ class SequenceManager:
         self.slam_done_sub = rospy.Subscriber("/sequence/slam_done", Bool, self.slam_done_CB)
         self.static_done_sub = rospy.Subscriber("/sequence/static_done", Bool, self.static_done_CB)
         self.dynamic_done_sub = rospy.Subscriber("/sequence/dynamic_done", Bool, self.dynamic_done_CB)
+        self.rotary_done_sub = rospy.Subscriber("/sequence/rotary_done", Bool, self.rotary_done_CB)
         self.traffic_done_sub = rospy.Subscriber("/sequence/traffic_done", Bool, self.traffic_done_CB)
 
         self.lane_steer_sub = rospy.Subscriber("/lane/steer", Float64, self.lane_steer_CB)
@@ -59,6 +63,23 @@ class SequenceManager:
 
         self.rate = rospy.Rate(20)
         self.run()
+        
+    #--------------------타이머 기반 상태 변경 함수--------------------
+    
+    def change_sequence_after(self, delay_sec, new_sequence):
+        """
+        delay_sec 초 후에 self.sequence를 new_sequence로 변경
+        """
+        def timer_job():
+            rospy.sleep(delay_sec)  # ROS time으로 sleep
+            rospy.loginfo(f"[SequenceManager] {delay_sec}초 경과 → 상태 {new_sequence.name} 로 변경")
+            self.sequence = new_sequence
+
+        # 백그라운드 스레드로 실행
+        t = threading.Thread(target=timer_job)
+        t.daemon = True
+        t.start()
+        self.timer_threads.append(t)
 
     #--------------------각 미션 완료 콜백함수--------------------
 
@@ -79,6 +100,12 @@ class SequenceManager:
             self.sequence = SequenceState.LANE_FOLLOWING
         elif msg.data == False:
             self.sequence = SequenceState.DYNAMIC_OBSTACLE
+            
+    def rotary_done_CB(self, msg):
+        if msg.data == True:
+            self.sequence = SequenceState.TRAFFIC_LIGHT
+        elif msg.data == False:
+            self.sequence = SequenceState.ROTARY
 
     def traffic_done_CB(self, msg):
         if msg.data == True:
@@ -180,18 +207,19 @@ class SequenceManager:
             self.mode_pub.publish(Float64(-1.0))
             self.speed_pub.publish(Float64(self.speed_turn))
             self.steer_pub.publish(self.lane_steer)
+            self.change_sequence_after(5.0, SequenceState.TURN_RIGHT)
 
     def handle_turn_left(self):
         rospy.loginfo_throttle(2.0, "[SequenceManager] 차선 추종 중... : 좌편향")
+        self.mode_pub.publish(Float64(-1.0))
         self.speed_pub.publish(Float64(self.speed_turn))
         self.steer_pub.publish(self.lane_steer)
-        self.bias_pub.publish(Float64(-1.0))
 
     def handle_turn_right(self):
         rospy.loginfo_throttle(2.0, "[SequenceManager] 차선 추종 중... : 우편향")
+        self.mode_pub.publish(Float64(1.0))
         self.speed_pub.publish(Float64(self.speed_turn))
         self.steer_pub.publish(self.lane_steer)
-        self.bias_pub.publish(Float64(1.0))
 
 
 if __name__ == "__main__":
