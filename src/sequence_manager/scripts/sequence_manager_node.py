@@ -32,8 +32,6 @@ class SequenceManager:
         self.lane_stopline = None
         self.static_speed = None
         self.static_steer = None
-        self.dynamic_speed = None
-        self.dynamic_steer = None
         self.traffic_is_stop = None
         
         self.timer_threads = [] # 타이머 작업 저장용 (중복 실행 방지)
@@ -57,8 +55,6 @@ class SequenceManager:
         self.lane_stopline_sub = rospy.Subscriber("/lane/stopline", Bool, self.lane_stopline_CB)
         self.static_speed_sub = rospy.Subscriber("/static/speed", Float64, self.static_speed_CB)
         self.static_steer_sub = rospy.Subscriber("/static/steer", Float64, self.static_steer_CB)
-        self.dynamic_speed_sub = rospy.Subscriber("/dynamic/speed", Float64, self.dynamic_speed_CB)
-        self.dynamic_steer_sub = rospy.Subscriber("/dynamic/steer", Float64, self.dynamic_steer_CB)
         self.traffic_speed_sub = rospy.Subscriber("/traffic/semantic", String, self.traffic_semantic_CB)
 
         self.rate = rospy.Rate(20)
@@ -97,7 +93,7 @@ class SequenceManager:
             
     def dynamic_done_CB(self, msg):
         if msg.data == True:
-            self.sequence = SequenceState.LANE_FOLLOWING
+            self.sequence = SequenceState.TURN_LEFT
         elif msg.data == False:
             self.sequence = SequenceState.DYNAMIC_OBSTACLE
             
@@ -109,7 +105,7 @@ class SequenceManager:
 
     def traffic_done_CB(self, msg):
         if msg.data == True:
-            self.sequence = SequenceState.LANE_FOLLOWING
+            self.sequence = SequenceState.TURN_RIGHT
         elif msg.data == False:
             self.sequence = SequenceState.TRAFFIC_LIGHT
 
@@ -126,12 +122,6 @@ class SequenceManager:
     
     def static_steer_CB(self, msg):
         self.static_steer = msg.data
-
-    def dynamic_speed_CB(self, msg):
-        self.dynamic_speed = msg.data
-    
-    def dynamic_steer_CB(self, msg):
-        self.dynamic_steer = msg.data
 
     def traffic_semantic_CB(self, msg):
         if msg.data == "LEFT" or msg.data == "STRAIGHT":
@@ -162,6 +152,8 @@ class SequenceManager:
                 self.handle_turn_left()
             elif self.sequence == SequenceState.TURN_RIGHT:
                 self.handle_turn_right()
+            elif self.sequence == SequenceState.ROTARY:
+                self.handle_rotary()
             else:
                 rospy.logwarn_throttle(5.0, f"[SequenceManager] 알 수 없는 시퀀스: {self.sequence}")
 
@@ -220,6 +212,9 @@ class SequenceManager:
         self.mode_pub.publish(Float64(1.0))
         self.speed_pub.publish(Float64(self.speed_turn+100))
         self.steer_pub.publish(self.lane_steer)
+
+    def handle_rotary(self):
+        rospy.loginfo_throttle(2.0, "[SequenceManager] 로타리 미션 중...")
 
 
 if __name__ == "__main__":
